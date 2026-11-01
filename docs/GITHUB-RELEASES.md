@@ -15,7 +15,7 @@ CHROME_BIN=/path/to/chrome-for-testing npm run test:personal:release
 The package command always builds fresh source. Output is under
 `build/personal-release/`:
 
-- `darkreader-personal-1.0.0-chromium.zip`, with `manifest.json` at its root.
+- `darkreader-personal-VERSION-chromium.zip`, with `manifest.json` at its root.
 - `SHA256SUMS`, the ZIP's SHA-256 checksum.
 - `INSTALL.md`, recipient instructions, also inside the ZIP.
 - `release.json`, source and version information, also inside the ZIP.
@@ -29,8 +29,8 @@ manifest so the existing development installation is unaffected.
 
 ## Versioning
 
-`personal-release.json` owns this fork's release name and version. The first
-version is `1.0.0`, under the descriptive name **Dark Reader Personal**. Each
+`personal-release.json` owns this fork's release name and version. The current
+candidate is `1.0.1`, under the descriptive name **Dark Reader Personal**. Each
 release must increase the version. Keep each of its three numeric components
 between 0 and 65535. The tag must be exactly `personal-vVERSION`.
 

@@ -13,13 +13,14 @@ release checks, and publish the installation ZIP for download.
 ## In progress
 Versioned packaging, an explicit draft-release workflow, installation/update
 instructions, and an extracted-ZIP installation regression are complete locally.
-The preview ZIP is build/personal-release/darkreader-personal-1.0.0-chromium.zip.
-It records dirty source and no tag. GitHub Actions and remote publication have
-not run. The original 440 px popup and existing development manifest are retained.
+Source and personal-v1.0.0 are pushed. Hosted checks verified package installation,
+Docs, and popup behavior. Startup needed a CI-only browser sandbox override;
+restart exposed a test installation race. Explicitly await reinstallation and
+release personal-v1.0.1 without rewriting the earlier tag. Runtime code is unchanged.
 
 ## Next action
 Commit the reviewed fork, fast-forward origin/main and preserve the feature
-branch, push the personal-v1.0.0 tag, dispatch the release workflow, resolve
+branch, push the personal-v1.0.1 tag, dispatch the release workflow, resolve
 hosted failures, and verify the downloadable release before handoff.
 
 ## Blockers

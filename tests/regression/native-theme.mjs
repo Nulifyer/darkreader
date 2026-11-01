@@ -55,7 +55,11 @@ try {
     await change({theme: {...settings.theme, preserveImages: false, engine: 'cssFilter'}, imagePreservationOverrides: [{host: 'native-theme.example', preserveImages: true}]});
     await popup.waitForFunction(async () => (await chrome.storage.local.get('imagePreservationOverrides')).imagePreservationOverrides?.[0]?.preserveImages === true, {polling: 100, timeout: 10000});
     await browser.close();
-    browser = await launch({...options, enableExtensions: [path.resolve('build/release/chrome-mv3')]});
+    browser = await launch(options);
+    // Await reinstallation explicitly before opening extension pages. The
+    // launcher's array option can return while installation is still pending.
+    const restoredId = await browser.installExtension(path.resolve('build/release/chrome-mv3'));
+    assert.equal(restoredId, id, 'Restart keeps the same extension identity');
     popup = await browser.newPage(); await openPopup();
     const restored = await popup.evaluate(async () => (await chrome.runtime.sendMessage({type: 'ui-bg-get-data'})).data.settings);
     assert.equal(restored.theme.preserveImages, false);
