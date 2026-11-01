@@ -30,7 +30,7 @@ manifest so the existing development installation is unaffected.
 ## Versioning
 
 `personal-release.json` owns this fork's release name and version. The current
-release is `1.0.1`, under the descriptive name **Dark Reader Personal**. Each
+release is `1.0.2`, under the descriptive name **Dark Reader Personal**. Each
 release must increase the version. Keep each of its three numeric components
 between 0 and 65535. The tag must be exactly `personal-vVERSION`.
 
@@ -79,3 +79,10 @@ The CI-only browser wrapper accommodates the hosted runner sandbox. The restart
 test explicitly waits for extension reinstallation before checking saved settings.
 Linux signed CRX distribution and automatic updates are deferred until a full
 installation/update cycle is verified in the target browser.
+
+[Version 1.0.2](https://github.com/Nulifyer/darkreader/releases/tag/personal-v1.0.2)
+fixes duplicate percentages in the shared appearance slider. Its
+[hosted release checks](https://github.com/Nulifyer/darkreader/actions/runs/41356979088)
+cover all four sliders in both scopes, repeated saves, resets, real mouse and
+keyboard input, and parent redraws during an unsaved preview. The public ZIP's
+checksum, source metadata, and all 91 files match the local tagged build.
