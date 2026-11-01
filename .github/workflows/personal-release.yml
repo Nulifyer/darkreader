@@ -49,8 +49,16 @@ jobs:
           chrome-version: '156.0.8078.80'
       - name: Verify installation package and release behavior
         env:
-          CHROME_BIN: ${{ steps.chrome.outputs.chrome-path }}
+          DARKREADER_TEST_CHROME: ${{ steps.chrome.outputs.chrome-path }}
+          CHROME_BIN: ${{ runner.temp }}/darkreader-test-chrome
         run: |
+          # The disposable hosted runner restricts Chrome's user-namespace sandbox.
+          # Keep the override in CI; installed extension behavior is unchanged.
+          cat > "$CHROME_BIN" <<'SCRIPT'
+          #!/bin/sh
+          exec "$DARKREADER_TEST_CHROME" --no-sandbox "$@"
+          SCRIPT
+          chmod +x "$CHROME_BIN"
           xvfb-run -a npm run test:personal:release
           xvfb-run -a npm run test:personal:docs
           xvfb-run -a npm run test:personal:popup
