@@ -26,8 +26,8 @@ async function loadBasicPage(header: string) {
 }
 
 describe('Toggling the extension', () => {
-    const automationMenuSelector = '.header__more-settings-button';
-    const automationSystemSelector = '.header__more-settings__system-dark-mode__checkbox .checkbox__input';
+    const automationMenuSelector = '#tab-settings';
+    const automationSystemSelector = '.automation-system input';
 
     it('should turn On/Off', async () => {
         await loadBasicPage('Toggle on/off');
@@ -41,7 +41,7 @@ describe('Toggling the extension', () => {
             ['a', 'color', 'rgb(51, 145, 255)'],
         ]);
 
-        await popupUtils.click('.toggle__off');
+        await popupUtils.click('.header__power');
         await timeout(500);
 
         await expectStyles([
@@ -53,7 +53,7 @@ describe('Toggling the extension', () => {
             ['a', 'color', 'rgb(0, 0, 238)'],
         ]);
 
-        await popupUtils.click('.toggle__on');
+        await popupUtils.click('.header__power');
         await timeout(500);
 
         await expectStyles([

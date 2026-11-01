@@ -204,7 +204,7 @@ describe('Style override', () => {
         });
 
         await expectStyles([
-            ['body', 'background-color', 'rgb(89, 0, 16)'],
+            ['body', 'background-color', 'rgb(73, 16, 26)'],
         ]);
 
         if (product === 'edge') {
@@ -214,7 +214,7 @@ describe('Style override', () => {
         await expect(pageUtils.evaluateScript(async () => {
             const style = document.querySelector('.testcase-style')!;
             return (style.nextSibling as HTMLStyleElement).sheet!.cssRules[0].cssText;
-        })).resolves.toBe('body { background-color: var(--darkreader-background-ffc0cb, #590010); }');
+        })).resolves.toBe('body { background-color: var(--darkreader-background-ffc0cb, #49101a); }');
     });
 
     it('should react to a new style', async () => {

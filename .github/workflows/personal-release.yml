@@ -1,0 +1,89 @@
+name: Prepare personal GitHub release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing release tag matching personal-release.json, such as personal-v1.0.0'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: personal-release-${{ inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.repository == 'Nulifyer/darkreader'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: npm ci
+      - name: Validate release tag and clean source
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: npm run package:personal -- --check "--tag=$RELEASE_TAG"
+      - run: npm run lint
+      - run: npx tsc --noEmit -p src/tsconfig.json
+      - run: npm run test:unit -- --runInBand
+      - name: Build installation package
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: npm run package:personal -- "--tag=$RELEASE_TAG"
+      - name: Install test browser
+        id: chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: '156.0.8078.80'
+      - name: Verify installation package and release behavior
+        env:
+          CHROME_BIN: ${{ steps.chrome.outputs.chrome-path }}
+        run: |
+          xvfb-run -a npm run test:personal:release
+          xvfb-run -a npm run test:personal:docs
+          xvfb-run -a npm run test:personal:popup
+          xvfb-run -a npm run test:personal:native
+      - uses: actions/upload-artifact@v4
+        with:
+          name: personal-release
+          path: |
+            build/personal-release/*.zip
+            build/personal-release/SHA256SUMS
+            build/personal-release/release.json
+            build/personal-release/INSTALL.md
+          if-no-files-found: error
+          retention-days: 14
+
+  draft:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: personal-release
+          path: package
+      - name: Create draft for manual review and publication
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: >-
+          gh release create "$RELEASE_TAG"
+          --verify-tag --draft
+          --title "Dark Reader Personal $RELEASE_TAG"
+          --notes-file package/INSTALL.md
+          package/*.zip package/SHA256SUMS package/release.json package/INSTALL.md

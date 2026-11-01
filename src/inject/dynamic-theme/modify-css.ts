@@ -508,6 +508,10 @@ export function getBgImageModifier(
                     return "url('')";
                 }
 
+                if (theme.preserveImages) {
+                    return `url("${url}")`;
+                }
+
                 let selector = rule.selectorText;
                 if (selector) {
                     if (selector.includes('::before')) {

@@ -14,7 +14,7 @@ function getThemeKey(theme: Theme) {
     themeCacheKeys.forEach((key) => {
         resultKey += `${key}:${theme[key]};`;
     });
-    return resultKey;
+    return `${resultKey}preserveImages:${theme.preserveImages};`;
 }
 
 const asyncQueue = createAsyncTasksQueue();

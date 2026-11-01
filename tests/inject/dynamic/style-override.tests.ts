@@ -8,6 +8,8 @@ declare const __PLUS__: boolean;
 
 const theme = {
     ...DEFAULT_THEME,
+    // Keep upstream exact-color regression fixtures on the Original profile.
+    colorProfile: 'classic' as const,
     darkSchemeBackgroundColor: 'black',
     darkSchemeTextColor: 'white',
 };

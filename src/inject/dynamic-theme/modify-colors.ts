@@ -32,6 +32,7 @@ export function clearColorModificationCache(): void {
 const rgbCacheKeys: Array<keyof RGBA> = ['r', 'g', 'b', 'a'];
 
 export const themeCacheKeys: Array<keyof Theme> = [
+    'colorProfile',
     'mode',
     'brightness',
     'contrast',
@@ -94,7 +95,7 @@ export function modifyColor(rgb: RGBA, theme: Theme): string {
 }
 
 function modifyAndRegisterColor(
-    type: 'background' | 'text' | 'border',
+    type: 'background' | 'text' | 'border' | 'chart',
     rgb: RGBA,
     theme: Theme,
     modifier: (rgb: RGBA, theme: Theme) => string,
@@ -184,6 +185,18 @@ function modifyBgHSL({h, s, l, a}: HSLA, pole: HSLA): HSLA {
     return {h: hx, s, l: lx, a};
 }
 
+function modifyBalancedBgHSL(original: HSLA, pole: HSLA): HSLA {
+    const result = modifyBgHSL(original, pole);
+    const neutral = original.s < 0.12 || (original.l > 0.8 && original.h > 200 && original.h < 280);
+    if (neutral) {
+        return result;
+    }
+    // Large colored surfaces should read as dark surfaces, with restrained
+    // accents. Upstream's 40% HSL ceiling can leave orange/yellow fills too
+    // bright for the light text independently generated above them.
+    return {...result, s: Math.min(result.s, 0.65), l: Math.min(result.l, 0.24)};
+}
+
 function _modifyBackgroundColor(rgb: RGBA, theme: Theme) {
     if (theme.mode === 0) {
         if (__PLUS__) {
@@ -197,7 +210,7 @@ function _modifyBackgroundColor(rgb: RGBA, theme: Theme) {
         return modifyColorWithCache(rgb, theme, modifyBgColorExtended, poles[0], poles[1]);
     }
     const pole = getBgPole(theme);
-    return modifyColorWithCache(rgb, theme, modifyBgHSL, pole);
+    return modifyColorWithCache(rgb, theme, theme.colorProfile === 'balanced' ? modifyBalancedBgHSL : modifyBgHSL, pole);
 }
 
 export function modifyBackgroundColor(rgb: RGBA, theme: Theme, shouldRegisterColorVariable = true): string {
@@ -271,6 +284,47 @@ export function modifyForegroundColor(rgb: RGBA, theme: Theme, shouldRegisterCol
         return _modifyForegroundColor(rgb, theme);
     }
     return modifyAndRegisterColor('text', rgb, theme, _modifyForegroundColor);
+}
+
+function relativeLuminance({r, g, b}: RGBA): number {
+    const linear = (value: number) => {
+        const s = value / 255;
+        return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+    };
+    return 0.2126 * linear(r) + 0.7152 * linear(g) + 0.0722 * linear(b);
+}
+
+function modifyChartHSL(original: HSLA, background: HSLA, foreground: HSLA): HSLA {
+    const low = (relativeLuminance(hslToRGB(background)) + 0.05) * 3 - 0.05;
+    const high = (relativeLuminance(hslToRGB(foreground)) + 0.05) / 4.5 - 0.05;
+    // A chart mark is neither a page surface nor text. Give it a restrained
+    // chroma and enough luminance to stand apart from a dark plot while keeping
+    // light numeric labels readable. Custom poles can make both goals infeasible.
+    const target = Math.max(0, low <= high ? (low + high) / 2 : high);
+    const color = {...original, s: Math.min(original.s, 0.55)};
+    let min = 0;
+    let max = 1;
+    for (let i = 0; i < 16; i++) {
+        color.l = (min + max) / 2;
+        if (relativeLuminance(hslToRGB(color)) < target) {
+            min = color.l;
+        } else {
+            max = color.l;
+        }
+    }
+    color.l = (min + max) / 2;
+    return color;
+}
+
+function _modifyChartColor(rgb: RGBA, theme: Theme): string {
+    return modifyColorWithCache(rgb, theme, modifyChartHSL, getBgPole(theme), getFgPole(theme));
+}
+
+export function modifyChartColor(rgb: RGBA, theme: Theme, shouldRegisterColorVariable = true): string {
+    if (!shouldRegisterColorVariable) {
+        return _modifyChartColor(rgb, theme);
+    }
+    return modifyAndRegisterColor('chart', rgb, theme, _modifyChartColor);
 }
 
 function modifyBorderHSL({h, s, l, a}: HSLA, poleFg: HSLA, poleBg: HSLA): HSLA {

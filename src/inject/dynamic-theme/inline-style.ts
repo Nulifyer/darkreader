@@ -1,6 +1,7 @@
 import {setInlineStyleValue} from '@plus/dynamic/inject';
 import type {Theme} from '../../definitions';
 import {forEach, push} from '../../utils/array';
+import {parseColorWithCache} from '../../utils/color';
 import {isShadowDomSupported} from '../../utils/platform';
 import {throttle} from '../../utils/throttle';
 import {getDuration} from '../../utils/time';
@@ -11,6 +12,7 @@ import {logWarn} from '../utils/log';
 import {iterateCSSDeclarations} from './css-rules';
 import {getImageDetails} from './image';
 import {getModifiableCSSDeclaration} from './modify-css';
+import {modifyChartColor} from './modify-colors';
 import type {CSSVariableModifier, ModifiedVarDeclaration} from './variables';
 import {variablesStore} from './variables';
 
@@ -284,15 +286,16 @@ export function stopWatchingForInlineStyles(): void {
     attrObservers.clear();
     inlineStringValueCache.clear();
     inlineStyleCache = new WeakMap();
-    svgInversionCache = new WeakSet();
+    inlineImageThemes = new WeakMap();
+    svgInversionCache = new WeakMap();
     svgAnalysisConditionCache = new WeakMap();
     resetInlineStyleLoopDetection();
 }
 
 let inlineStyleCache = new WeakMap<HTMLElement, string>();
-let svgInversionCache = new WeakSet<SVGSVGElement>();
+let svgInversionCache = new WeakMap<SVGSVGElement, Theme>();
 let svgAnalysisConditionCache = new WeakMap<SVGSVGElement, boolean>();
-const themeProps: Array<keyof Theme> = ['brightness', 'contrast', 'grayscale', 'sepia', 'mode'];
+const themeProps: Array<keyof Theme> = ['brightness', 'contrast', 'grayscale', 'sepia', 'mode', 'preserveImages', 'colorProfile'];
 
 function shouldAnalyzeSVGAsImage(svg: SVGSVGElement) {
     if (svgAnalysisConditionCache.has(svg)) {
@@ -315,11 +318,17 @@ function getThemeKey(theme: Theme): string {
     if (theme === prevTheme) {
         return themeKey;
     }
-    themeKey = '';
+    let nextThemeKey = '';
     for (let i = 0; i < themeProps.length; i++) {
         const prop = themeProps[i];
-        themeKey += `${prop}="${theme[prop]}" `;
+        nextThemeKey += `${prop}="${theme[prop]}" `;
     }
+    if (nextThemeKey !== themeKey) {
+        // Cached inline strings contain registered palette variables. Reusing
+        // them after clearing the palette leaves the old fallback color behind.
+        inlineStringValueCache.clear();
+    }
+    themeKey = nextThemeKey;
     prevTheme = theme;
     return themeKey;
 }
@@ -330,6 +339,8 @@ function getInlineStyleCacheKey(el: HTMLElement, theme: Theme): string {
         .map((attr) => `${attr}="${el.getAttribute(attr)}"`);
     return `${attrKey} ${getThemeKey(theme)}`;
 }
+
+let inlineImageThemes = new WeakMap<HTMLElement, Theme>();
 
 function shouldIgnoreInlineStyle(element: HTMLElement, selectors: string[]): boolean {
     for (let i = 0, len = selectors.length; i < len; i++) {
@@ -409,6 +420,7 @@ function resetInlineStyleLoopDetection() {
 }
 
 export function overrideInlineStyle(element: HTMLElement, theme: Theme, ignoreInlineSelectors: string[], ignoreImageSelectors: string[]): void {
+    inlineImageThemes.set(element, theme);
     if (parentHadTeardown(element)) {
         return;
     }
@@ -425,16 +437,29 @@ export function overrideInlineStyle(element: HTMLElement, theme: Theme, ignoreIn
 
     const unsetProps = new Set(Object.keys(overrides));
 
-    function overrideValue(sourceAttr: string, sourceCSSProp: string, modifierCSSProp: string, srcVal: string, cssVal: string) {
-        const targetCSSProp = modifierCSSProp;
-        const cachedStringValue = inlineStringValueCache.get(modifierCSSProp)?.get(cssVal);
+    function overrideValue(sourceAttr: string, sourceCSSProp: string, modifierCSSProp: string, srcVal: string, cssVal: string, chartColor: 'chart' | 'pattern' | null = null) {
+        // SVG paint can use a background/text/border color role, but must
+        // still be written to fill/stroke/stop-color rather than that role's
+        // HTML property. Otherwise its generated variable is also discarded
+        // on the next pass because the corresponding HTML attribute is absent.
+        const targetCSSProp = sourceAttr === 'style' ? sourceCSSProp :
+            sourceAttr === 'fill' || sourceAttr === 'stroke' || sourceAttr === 'stop-color' ? sourceAttr : modifierCSSProp;
+        const colorRole = chartColor ?? modifierCSSProp;
+        const cachedStringValue = inlineStringValueCache.get(colorRole)?.get(cssVal);
         if (cachedStringValue) {
             setStaticValue(cachedStringValue);
             return;
         }
 
         asyncCancelled = false;
-        const mod = getModifiableCSSDeclaration(
+        const chartRGB = chartColor ? parseColorWithCache(cssVal) : null;
+        const mod = chartRGB ? {value: (theme: Theme) => {
+            const color = modifyChartColor(chartRGB, theme);
+            // Equalizing chart luminance must not flatten a checkered/striped
+            // marker into a solid fill. Darken its detail over the base color;
+            // both shades continue supporting the same light numeric labels.
+            return chartColor === 'pattern' ? `color-mix(in srgb, ${color} 75%, rgba(0, 0, 0, ${chartRGB.a ?? 1}))` : color;
+        }} : getModifiableCSSDeclaration(
             modifierCSSProp,
             cssVal,
             {style: element.style} as CSSStyleRule,
@@ -486,11 +511,14 @@ export function overrideInlineStyle(element: HTMLElement, theme: Theme, ignoreIn
 
         function setAsyncValue(promise: Promise<string | null>, sourceValue: string) {
             promise.then((value) => {
+                if (inlineImageThemes.get(element) !== theme) {
+                    return;
+                }
                 if (value && targetCSSProp === 'background' && value.startsWith('var(--darkreader-bg--')) {
                     setStaticValue(value);
                 }
                 if (value && targetCSSProp === 'background-image') {
-                    if ((element === document.documentElement || element === document.body) && value === sourceValue) {
+                    if (!theme.preserveImages && (element === document.documentElement || element === document.body) && value === sourceValue) {
                         // Remove big bright backgrounds from root or body
                         value = 'none';
                     }
@@ -503,10 +531,10 @@ export function overrideInlineStyle(element: HTMLElement, theme: Theme, ignoreIn
         const value = typeof mod.value === 'function' ? mod.value(theme) : mod.value;
         if (typeof value === 'string') {
             setStaticValue(value);
-            if (!inlineStringValueCache.has(modifierCSSProp)) {
-                inlineStringValueCache.set(modifierCSSProp, new Map());
+            if (!inlineStringValueCache.has(colorRole)) {
+                inlineStringValueCache.set(colorRole, new Map());
             }
-            inlineStringValueCache.get(modifierCSSProp)!.set(cssVal, value);
+            inlineStringValueCache.get(colorRole)!.set(cssVal, value);
         } else if (value instanceof Promise) {
             setAsyncValue(value, cssVal);
         } else if (typeof value === 'object') {
@@ -525,17 +553,28 @@ export function overrideInlineStyle(element: HTMLElement, theme: Theme, ignoreIn
 
     const isSVGElement = element instanceof SVGElement;
     const svg = isSVGElement ? element.ownerSVGElement ?? (element instanceof SVGSVGElement ? element : null) : null;
-    if (isSVGElement && theme.mode === 1 && svg) {
-        if (svgInversionCache.has(svg)) {
+    const isChartShape = isSVGElement && !(element instanceof SVGTextElement) &&
+        theme.mode === 1 && theme.colorProfile === 'balanced' &&
+        getSVGElementRoot(element)?.classList.contains('recharts-surface');
+    const chartColorRole = isChartShape ? (element.closest('pattern') && element.previousElementSibling ? 'pattern' : 'chart') : null;
+    if (svg && (theme.preserveImages || theme.mode !== 1)) {
+        svgInversionCache.delete(svg);
+        svg.removeAttribute('data-darkreader-inline-invert');
+    }
+    if (isSVGElement && !theme.preserveImages && theme.mode === 1 && svg) {
+        if (svgInversionCache.get(svg) === theme) {
             return;
         }
         if (shouldAnalyzeSVGAsImage(svg)) {
-            svgInversionCache.add(svg);
+            svgInversionCache.set(svg, theme);
             const analyzeSVGAsImage = () => {
-                let svgString = svg.outerHTML;
+                let svgString = new XMLSerializer().serializeToString(svg);
                 svgString = svgString.replaceAll('<style class="darkreader darkreader--sync" media="screen"></style>', '');
                 const dataURL = `data:image/svg+xml;base64,${btoa(svgString)}`;
                 getImageDetails(dataURL).then((details) => {
+                    if (svgInversionCache.get(svg) !== theme) {
+                        return;
+                    }
                     if (
                         (details.isDark && details.isTransparent) ||
                         (details.isLarge && details.isLight && !details.isTransparent)
@@ -544,7 +583,7 @@ export function overrideInlineStyle(element: HTMLElement, theme: Theme, ignoreIn
                     } else {
                         svg.removeAttribute('data-darkreader-inline-invert');
                     }
-                });
+                }).catch(logWarn);
             };
             analyzeSVGAsImage();
             if (!isDOMReady()) {
@@ -617,7 +656,7 @@ export function overrideInlineStyle(element: HTMLElement, theme: Theme, ignoreIn
                             const {width, height} = element.getBoundingClientRect();
                             isBg = (width > SMALL_SVG_THRESHOLD || height > SMALL_SVG_THRESHOLD);
                         }
-                        overrideValue('fill', '', isBg ? 'background-color' : 'color', value, value);
+                        overrideValue('fill', '', isBg ? 'background-color' : 'color', value, value, chartColorRole);
                     };
 
                     if (isReadyStateComplete()) {
@@ -632,7 +671,7 @@ export function overrideInlineStyle(element: HTMLElement, theme: Theme, ignoreIn
         }
         if (element.hasAttribute('stop-color')) {
             const value = element.getAttribute('stop-color')!;
-            overrideValue('stop-color', '', 'background-color', value, value);
+            overrideValue('stop-color', '', 'background-color', value, value, chartColorRole);
         }
     }
 
@@ -652,7 +691,7 @@ export function overrideInlineStyle(element: HTMLElement, theme: Theme, ignoreIn
             return;
         }
         if (overrides.hasOwnProperty(property) || (property.startsWith('--') && !normalizedPropList[property])) {
-            overrideValue('style', property, property, value, value);
+            overrideValue('style', property, property, value, value, property === 'fill' || property === 'stop-color' ? chartColorRole : null);
         } else if (shorthandOverrides[property] && value.includes('var(')) {
             overrideValue('style', property, property, value, value);
         } else {

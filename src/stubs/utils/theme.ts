@@ -1,7 +1,7 @@
-import type {Theme} from 'definitions';
-import type {HSLA} from 'utils/color';
-import {writeLocalStorage} from 'background/utils/extension-api';
-import uiHighlights from 'background/ui-highlights';
+import type {Theme} from '../../definitions';
+import type {HSLA} from '../../utils/color';
+import {writeLocalStorage} from '../../background/utils/extension-api';
+import uiHighlights from '../../background/ui-highlights';
 
 export function getBackgroundPoles(_theme: Theme): [string, string] {
     return ['', ''];

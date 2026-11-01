@@ -22,6 +22,8 @@ test('Settings Validation', () => {
     });
 
     const wonkyTheme = {
+        colorProfile: 'invalid',
+        preserveImages: null as any,
         mode: 'dark',
         brightness: 250,
         contrast: -50,
@@ -53,10 +55,13 @@ test('Settings Validation', () => {
     expect(defaultSet).toEqual(DEFAULT_SETTINGS);
 
     const wonkySet = {
+        imagePreservationOverrides: null as any,
         schemeVersion: 'x',
         enabled: '',
         fetchNews: null as boolean | null,
         theme: {
+            colorProfile: 'invalid',
+            preserveImages: null as any,
             mode: 'dark',
             brightness: 250,
             contrast: -50,
@@ -150,10 +155,13 @@ test('Settings Validation', () => {
     });
 
     const validSet: UserSettings = {
+        imagePreservationOverrides: [],
         schemeVersion: 2,
         enabled: true,
         fetchNews: true,
         theme: {
+            colorProfile: 'balanced',
+            preserveImages: true,
             mode: 0,
             brightness: 125,
             contrast: 50,

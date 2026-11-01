@@ -1,4 +1,5 @@
 import {m} from 'malevic';
+import ImageSettings from '../../components/image-settings';
 
 import {DEFAULT_SETTINGS, DEFAULT_THEME, DEFAULT_COLORS} from '../../../../defaults';
 import type {Theme, ViewProps} from '../../../../definitions';
@@ -173,6 +174,7 @@ export default function ThemePage(props: ViewProps) {
     return (
         <section class="m-section theme-page">
             <ThemePresetPicker {...props} />
+            <ImageSettings {...props} scope="site" />
             <Collapsible>
                 <Collapsible.Group id="main" label="Brightness, contrast, mode">
                     <MainGroup theme={theme} change={change} />

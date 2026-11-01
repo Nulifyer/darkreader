@@ -3,6 +3,7 @@ import {DEFAULT_THEME} from '../../../src/defaults';
 import type {DynamicThemeFix} from '../../../src/definitions';
 import {FilterMode} from '../../../src/generators/css-filter';
 import {createOrUpdateDynamicTheme, removeDynamicTheme} from '../../../src/inject/dynamic-theme';
+import {removeStyle} from '../../../src/inject/style';
 import {removeNode} from '../../../src/inject/utils/dom';
 import {multiline, timeout} from '../support/test-utils';
 
@@ -20,6 +21,25 @@ afterEach(() => {
 });
 
 describe('FIXES', () => {
+    it('retains Dynamic mode through repeated color-only extension updates', () => {
+        const fixes: DynamicThemeFix[] = [{
+            url: ['*'],
+            css: '',
+            invert: [],
+            ignoreInlineStyle: [],
+            ignoreImageAnalysis: [],
+            ignoreCSSUrl: [],
+            disableStyleSheetsProxy: false,
+            disableCustomElementRegistryProxy: false,
+        }];
+        createOrUpdateDynamicTheme(DEFAULT_THEME, fixes, false);
+        removeStyle();
+        createOrUpdateDynamicTheme({...DEFAULT_THEME, brightness: 90}, fixes, false);
+        expect(document.documentElement.getAttribute('data-darkreader-mode')).toBe('dynamic');
+        removeDynamicTheme();
+        expect(document.documentElement.hasAttribute('data-darkreader-mode')).toBe(false);
+    });
+
     it('should add custom attributes to root element', () => {
         createOrUpdateDynamicTheme(DEFAULT_THEME, null, false);
         expect(document.documentElement.getAttribute(`data-darkreader-mode`)).toBe('dynamic');
@@ -43,7 +63,7 @@ describe('FIXES', () => {
             disableStyleSheetsProxy: false,
             disableCustomElementRegistryProxy: false,
         }];
-        createOrUpdateDynamicTheme(DEFAULT_THEME, fixes, false);
+        createOrUpdateDynamicTheme({...DEFAULT_THEME, preserveImages: false}, fixes, false);
         expect(getComputedStyle(container.querySelector('.logo')!).filter).toBe('invert(1) hue-rotate(180deg) contrast(0.9)');
     });
 
@@ -107,7 +127,7 @@ describe('FIXES', () => {
         );
         createOrUpdateDynamicTheme(DEFAULT_THEME, null, false);
 
-        expect(getComputedStyle(container).backgroundColor).toBe('rgb(89, 0, 16)');
+        expect(getComputedStyle(container).backgroundColor).toBe('rgb(73, 16, 26)');
         const metaElement: HTMLMetaElement = document.createElement('meta');
         metaElement.name = 'darkreader-lock';
         document.head.appendChild(metaElement);

@@ -2,6 +2,7 @@ import {extendThemeDefaults} from '@plus/defaults';
 import type {Theme, UserSettings} from './definitions';
 import {ThemeEngine} from './generators/theme-engines';
 import {AutomationMode} from './utils/automation';
+import {FILTER_MODE_SITES} from './utils/theme-compatibility';
 import type {ParsedColorSchemeConfig} from './utils/colorscheme-parser';
 import {isMacOS, isWindows, isCSSColorSchemePropSupported, isEdge, isMobile} from './utils/platform';
 
@@ -20,6 +21,8 @@ export const DEFAULT_COLORS = {
 };
 
 export const DEFAULT_THEME: Theme = {
+    colorProfile: 'balanced',
+    preserveImages: true,
     mode: 1,
     brightness: 100,
     contrast: 100,
@@ -61,20 +64,14 @@ export const DEFAULT_COLORSCHEME: ParsedColorSchemeConfig = {
     },
 };
 
-const filterModeSites = [
-    '*.officeapps.live.com',
-    '*.sharepoint.com',
-    'docs.google.com',
-    'onedrive.live.com',
-];
-
 export const DEFAULT_SETTINGS: UserSettings = {
+    imagePreservationOverrides: [],
     schemeVersion: 0,
     enabled: true,
-    fetchNews: true,
+    fetchNews: false,
     theme: DEFAULT_THEME,
     presets: [],
-    customThemes: filterModeSites.map((url) => {
+    customThemes: FILTER_MODE_SITES.map((url) => {
         const engine: ThemeEngine = ThemeEngine.cssFilter;
         return {
             url: [url],

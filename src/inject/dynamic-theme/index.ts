@@ -15,14 +15,16 @@ import {logInfo, logWarn} from '../utils/log';
 import type {AdoptedStyleSheetManager} from './adopted-style-manger';
 import {createAdoptedStyleSheetOverride, canHaveAdoptedStyleSheets} from './adopted-style-manger';
 import {combineFixes, findRelevantFix} from './fixes';
+import {getImagePreservingIconSelector, isUIIconSelector} from './image-preservation';
 import {getStyleInjectionMode, injectStyleAway, removeStyleContainer} from './injection';
 import {overrideInlineStyle, getInlineOverrideStyle, watchForInlineStyles, stopWatchingForInlineStyles, INLINE_STYLE_SELECTOR} from './inline-style';
 import {changeMetaThemeColorWhenAvailable, restoreMetaThemeColor} from './meta-theme-color';
-import {modifyBackgroundColor, modifyBorderColor, modifyForegroundColor} from './modify-colors';
+import {modifyBackgroundColor, modifyBorderColor, modifyChartColor, modifyForegroundColor} from './modify-colors';
 import {getModifiedUserAgentStyle, getModifiedFallbackStyle, cleanModificationCache, getSelectionColor, setFilterSelectorHandler} from './modify-css';
 import {clearColorPalette, getColorPalette, registerVariablesSheet, releaseVariablesSheet} from './palette';
 import {mediaFilterSelectors, cleanFilterSelectors, addFilterSelector} from './selectors';
 import type {FilterSelectorsCollection} from './selectors';
+import {composeSiteFixesCSS, getSiteOverrides} from './site-overrides';
 import type {StyleElement, StyleManager} from './style-manager';
 import {manageStyle, getManageableStyles, cleanLoadingLinks, setIgnoredCSSURLs} from './style-manager';
 import {injectProxy} from './stylesheet-proxy';
@@ -41,6 +43,22 @@ const styleManagers = new Map<StyleElement, StyleManager>();
 const adoptedStyleManagers: AdoptedStyleSheetManager[] = [];
 let theme: Theme | null = null;
 let fixes: DynamicThemeFix | null = null;
+let siteFixesCSSCache: {theme: Theme; css: string; url: string; result: string} | null = null;
+
+function getSiteFixesCSS(): string {
+    if (!theme) {
+        return '';
+    }
+    const source = fixes?.css ?? '';
+    const url = location.href;
+    if (siteFixesCSSCache?.theme === theme && siteFixesCSSCache.css === source && siteFixesCSSCache.url === url) {
+        return siteFixesCSSCache.result;
+    }
+    const css = replaceCSSTemplates(source);
+    const result = composeSiteFixesCSS(css, getSiteOverrides(url, theme).css, theme.preserveImages, theme.stylesheet);
+    siteFixesCSSCache = {theme, css: source, url, result};
+    return result;
+}
 let isIFrame: boolean | null = null;
 let ignoredImageAnalysisSelectors: string[] = [];
 let ignoredInlineSelectors: string[] = [];
@@ -172,6 +190,21 @@ setFilterSelectorHandler((selector, type, media) => {
 function getInversionStyleValue(): string {
     if (!theme) {
         return '';
+    }
+
+    if (theme.preserveImages) {
+        const icons = [...new Set([
+            ...(fixes?.invert ?? []).filter(isUIIconSelector),
+            ...getSiteOverrides(location.href, theme).invert,
+        ])];
+        if (theme.mode !== 1 || icons.length === 0) {
+            return '';
+        }
+        // Preserve content images while retaining readability fixes for known
+        // UI glyphs. The ordinary INVERT list also includes document canvases
+        // and photos, so enabling that whole list would violate preservation.
+        const filter = getCSSFilterValue({...theme, contrast: clamp(theme.contrast - 10, 0, 100)});
+        return `${icons.map(getImagePreservingIconSelector).join(', ')} {\n    filter: ${filter} !important;\n}`;
     }
 
     const rules: string[] = [];
@@ -317,7 +350,7 @@ function createStaticStyleOverrides() {
         proxyScript.remove();
     }
 
-    staticStyleInjector.inject('override', fixes && fixes.css ? replaceCSSTemplates(fixes.css) : '', 'ending');
+    staticStyleInjector.inject('override', getSiteFixesCSS(), 'ending');
 }
 
 const shadowRootsWithOverrides = new Set<ShadowRoot>();
@@ -327,7 +360,7 @@ function createShadowStaticStyleOverridesInner(root: ShadowRoot) {
     inlineStyle.textContent = getInlineOverrideStyle();
     root.insertBefore(inlineStyle, root.firstChild);
     const overrideStyle = createOrUpdateStyle('darkreader--override', root);
-    overrideStyle.textContent = fixes && fixes.css ? replaceCSSTemplates(fixes.css) : '';
+    overrideStyle.textContent = getSiteFixesCSS();
     root.insertBefore(overrideStyle, inlineStyle.nextSibling);
 
     const invertStyle = createOrUpdateStyle('darkreader--invert', root);
@@ -833,6 +866,7 @@ export function createOrUpdateDynamicThemeInternal(themeConfig: Theme, dynamicTh
             palette.background.forEach((color) => modifyBackgroundColor(color, theme!));
             palette.text.forEach((color) => modifyForegroundColor(color, theme!));
             palette.border.forEach((color) => modifyBorderColor(color, theme!));
+            palette.chart.forEach((color) => modifyChartColor(color, theme!));
             return;
         }
 
@@ -848,6 +882,7 @@ export function createOrUpdateDynamicThemeInternal(themeConfig: Theme, dynamicTh
         ignoredInlineSelectors = [];
         setIgnoredCSSURLs([]);
     }
+    ignoredInlineSelectors = [...ignoredInlineSelectors, ...getSiteOverrides(location.href, theme).ignoreInlineStyle];
 
     if (theme.immediateModify) {
         setIsDOMReady(() => {
@@ -1052,5 +1087,6 @@ export function cleanDynamicThemeCache(): void {
     releaseVariablesSheet();
     prevTheme = null;
     prevFixes = null;
+    siteFixesCSSCache = null;
     staticStyleInjector = null;
 }

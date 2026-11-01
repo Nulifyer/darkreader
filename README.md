@@ -9,7 +9,19 @@
 <br/>
 <br/>
 
+## Personal fork releases
+
+Install this fork from an installation-ready GitHub release ZIP using
+[these instructions](docs/GITHUB-INSTALL.md). No build tools or store account
+are needed. Updates are manual. See [the release process](docs/GITHUB-RELEASES.md)
+to build packages and prepare a draft release. The store links above refer to
+the official upstream extension.
+
 ## Questions
+
+For this personal fork's image controls, build commands, and browser installation,
+see [Personal build](docs/PERSONAL-BUILD.md). The [color audit](docs/COLOR-AUDIT.md)
+explains the palette, editor compatibility, and simpler interface.
 
 Most questions can be answered by reading the [help page](https://darkreader.org/help/).
 If the help page doesn't answer your question, open up a new [discussion](https://github.com/darkreader/darkreader/discussions).

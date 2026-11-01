@@ -1,6 +1,7 @@
 import type {Theme, InversionFix} from '../definitions';
 import {compareChromeVersions, chromiumVersion, isFirefox, firefoxVersion} from '../utils/platform';
 import {parseArray, formatArray} from '../utils/text';
+import {getSiteUIIconSelectors} from '../utils/theme-compatibility';
 import {compareURLPatterns, isURLInList} from '../utils/url';
 
 import {createTextStyle} from './text-style';
@@ -105,6 +106,21 @@ export function cssFilterStyleSheetTemplate(filterRoot: string, filterValue: str
         lines.push('');
         lines.push('/* Custom rules */');
         lines.push(fix.css);
+    }
+
+    if (config.mode === FilterMode.dark) {
+        const icons = getSiteUIIconSelectors(url);
+        if (icons.length > 0) {
+            // Inline background sprites can match the generic image reversal
+            // rule. Let the root filter lighten these control glyphs once;
+            // reversing them again would leave dark icons on a dark toolbar.
+            lines.push('');
+            lines.push('/* UI glyphs follow the page foreground */');
+            lines.push(`${joinSelectors(icons.flatMap((icon) => [icon, `${icon} *`]))} {`);
+            lines.push('  -webkit-filter: none !important;');
+            lines.push('  filter: none !important;');
+            lines.push('}');
+        }
     }
 
     lines.push('');

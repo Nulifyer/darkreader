@@ -1,7 +1,6 @@
 import {m} from 'malevic';
 
 import type {ExtWrapper} from '../../../../definitions';
-import {getLocalMessage} from '../../../../utils/locales';
 import {getURLHostOrProtocol, isURLInList} from '../../../../utils/url';
 import {Button} from '../../../controls';
 
@@ -13,15 +12,10 @@ export default function CustomSettingsToggle({data, actions}: ExtWrapper) {
 
     const isCustom = data.settings.customThemes.some(({url}) => isURLInList(tab.url, url));
 
-    const urlText = host
-        .split('.')
-        .reduce<string[]>((elements, part, i) => elements.concat(
-            <wbr />,
-            `${i > 0 ? '.' : ''}${part}`
-        ), []);
-
     return (
         <Button
+            aria-pressed={isCustom}
+            title={host}
             class={{
                 'custom-settings-toggle': true,
                 'custom-settings-toggle--checked': isCustom,
@@ -42,7 +36,7 @@ export default function CustomSettingsToggle({data, actions}: ExtWrapper) {
             }}
         >
             <span class="custom-settings-toggle__wrapper">
-                {getLocalMessage('only_for')} <span class="custom-settings-toggle__url" >{urlText}</span>
+                {isCustom ? 'Appearance: this site' : 'Appearance: all sites'}
             </span>
         </Button>
     );

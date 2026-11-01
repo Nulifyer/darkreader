@@ -29,5 +29,9 @@ export function createOrUpdateStyle(css: string, type: string): void {
 
 export function removeStyle(): void {
     removeNode(document.getElementById('dark-reader-style'));
-    document.documentElement.removeAttribute('data-darkreader-mode');
+    // Clearing an obsolete Filter/Static stylesheet also runs before Dynamic
+    // updates. Its color-only fast path keeps the existing Dynamic styles.
+    if (document.documentElement.getAttribute('data-darkreader-mode') !== 'dynamic') {
+        document.documentElement.removeAttribute('data-darkreader-mode');
+    }
 }

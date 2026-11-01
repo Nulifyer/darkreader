@@ -7,52 +7,25 @@
     min-height: 0;
 
     &__button {
-        border-bottom: @size-border solid @color-border;
-        border-left: none;
-        border-right: none;
-        border-top: none;
-        box-sizing: border-box;
-        color: @color-control-fore-inactive;
-        font-size: @size-text-large;
-        font-weight: bold;
-        height: @size-control-inner + @size-border;
-        padding: 0 @indent-small + @size-border;
-        white-space: pre;
-
-        &:hover {
-            color: @color-fore;
-        }
-
-        &:active {
-            background-color: @color-control-hover;
-        }
+        background: transparent;
+        border: none;
+        border-radius: 0.375rem;
+        color: @color-fore;
+        flex: 1;
+        font-size: @size-text-normal;
+        height: 2rem;
+        padding: 0;
 
         &--active {
-            border-bottom: none;
-            border-left: @size-border solid @color-border;
-            border-right: @size-border solid @color-border;
-            border-top: @size-border solid @color-border;
-            color: @color-heading;
-            padding: 0 @indent-small;
-
-            &:hover {
-                color: @color-heading;
-            }
+            background: @color-control-hover;
+            color: @color-control-fore;
         }
     }
 
     &__buttons {
         display: flex;
         flex: none;
-        flex-direction: row;
-        justify-content: center;
-
-        &::before,
-        &::after {
-            border-bottom: @size-border solid @color-border;
-            content: "";
-            flex: auto;
-        }
+        gap: 0.25rem;
     }
 
     &__tabs {
@@ -65,18 +38,12 @@
 
     &__tab {
         background-color: @color-back;
-        display: flex;
-        opacity: 0;
-        overflow: hidden;
-        pointer-events: none;
-        transition: width @time-slow, opacity @time-fast;
-        width: 0;
+        display: none;
+        overflow: auto;
+        width: 100%;
 
         &--active {
-            opacity: 1;
-            pointer-events: all;
-            transition: width @time-slow, opacity @time-slow;
-            width: 100%;
+            display: flex;
         }
     }
 }

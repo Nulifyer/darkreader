@@ -3,6 +3,12 @@
   "version": "4.9.134",
   "description": "Dark mode for every website",
   "scripts": {
+    "build:personal": "npm run build -- --chrome-mv3",
+    "package:personal": "node tasks/personal-release.js",
+    "test:personal:release": "node tests/regression/personal-release.mjs",
+    "dev:personal": "npm run debug:watch:mv3",
+    "test:personal:docs": "node tests/regression/docs-toolbar.mjs",
+    "test:personal:sites": "node tests/regression/site-matrix.mjs",
     "api": "node --max-old-space-size=3072 tasks/cli.js build --api",
     "build": "node --max-old-space-size=3072 tasks/cli.js build --release",
     "build:all": "node --max-old-space-size=3072 tasks/cli.js build --debug --release --api",
@@ -39,7 +45,9 @@
     "test:unit:debug": "node --inspect-brk ./node_modules/jest/bin/jest --config=tests/unit/jest.config.mjs --runInBand --no-cache --watch",
     "translate-en-message": "node ./tasks/translate.js --message",
     "translate-new-en-messages": "node ./tasks/translate.js --new-messages",
-    "deno:bootstrap": "deno run --allow-read=./ --allow-sys=uid --allow-write=deno.json tasks/deno.js"
+    "deno:bootstrap": "deno run --allow-read=./ --allow-sys=uid --allow-write=deno.json tasks/deno.js",
+    "test:personal:native": "node tests/regression/native-theme.mjs",
+    "test:personal:popup": "node tests/regression/popup.mjs"
   },
   "main": "darkreader.js",
   "module": "darkreader.mjs",

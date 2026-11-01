@@ -24,6 +24,7 @@ export default class UserStorage {
     }
 
     private static fillDefaults(settings: UserSettings) {
+        settings.fetchNews = false;
         settings.theme = {...DEFAULT_THEME, ...settings.theme};
         settings.time = {...DEFAULT_SETTINGS.time, ...settings.time};
         settings.presets.forEach((preset) => {
@@ -233,7 +234,7 @@ export default class UserStorage {
         };
 
         const {enabledFor, disabledFor} = $settings;
-        const updatedSettings = {...UserStorage.settings, ...$settings};
+        const updatedSettings = {...UserStorage.settings, ...$settings, fetchNews: false};
         if (enabledFor) {
             updatedSettings.enabledFor = filterSiteList(enabledFor);
         }

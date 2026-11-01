@@ -14,14 +14,19 @@ interface RegisteredColor {
         value: string;
         variable: string;
     };
+    chart?: {
+        value: string;
+        variable: string;
+    };
 }
 
-type ColorType = 'background' | 'border' | 'text';
+type ColorType = 'background' | 'border' | 'text' | 'chart';
 
 interface ColorPalette {
     background: RGBA[];
     border: RGBA[];
     text: RGBA[];
+    chart: RGBA[];
 }
 
 let variablesSheet: CSSStyleSheet | null;
@@ -30,7 +35,7 @@ const registeredColors = new Map<string, RegisteredColor>();
 
 export function registerVariablesSheet(sheet: CSSStyleSheet): void {
     variablesSheet = sheet;
-    const types: ColorType[] = ['background', 'text', 'border'];
+    const types: ColorType[] = ['background', 'text', 'border', 'chart'];
     registeredColors.forEach((registered) => {
         types.forEach((type) => {
             if (registered[type]) {
@@ -84,6 +89,7 @@ export function getColorPalette(): ColorPalette {
     const background: RGBA[] = [];
     const border: RGBA[] = [];
     const text: RGBA[] = [];
+    const chart: RGBA[] = [];
 
     registeredColors.forEach((registered) => {
         if (registered.background) {
@@ -95,9 +101,12 @@ export function getColorPalette(): ColorPalette {
         if (registered.text) {
             text.push(registered.parsed);
         }
+        if (registered.chart) {
+            chart.push(registered.parsed);
+        }
     });
 
-    return {background, border, text};
+    return {background, border, text, chart};
 }
 
 export function clearColorPalette(): void {

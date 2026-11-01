@@ -1,0 +1,84 @@
+@import "../../theme";
+
+.popup-switch {
+    cursor: pointer;
+    display: inline-flex;
+    flex: none;
+    position: relative;
+
+    input {
+        cursor: pointer;
+        height: 100%;
+        inset: 0;
+        margin: 0;
+        opacity: 0;
+        position: absolute;
+        width: 100%;
+        z-index: 1;
+    }
+
+    &__track {
+        background: #68717d;
+        border-radius: 1rem;
+        display: flex;
+        height: 1.375rem;
+        padding: 0.1875rem;
+        transition: background @time-fast;
+        width: 2.375rem;
+        box-sizing: border-box;
+
+        > span {
+            background: #f4f6f9;
+            border-radius: 50%;
+            height: 1rem;
+            transition: transform @time-fast;
+            width: 1rem;
+        }
+    }
+
+    input:checked + &__track {
+        background: @color-heading;
+
+        > span {
+            background: #172338;
+            transform: translateX(1rem);
+        }
+    }
+
+    input:focus-visible + &__track {
+        outline: 2px solid @color-heading;
+        outline-offset: 3px;
+    }
+
+    input:disabled + &__track {
+        opacity: 0.4;
+    }
+}
+
+.popup-choice {
+    background: #202329;
+    border-radius: 0.625rem;
+    display: flex;
+    padding: 0.1875rem;
+
+    button {
+        background: none;
+        border: none;
+        border-radius: 0.4375rem;
+        color: @color-fore;
+        cursor: pointer;
+        flex: 1;
+        font: inherit;
+        min-height: 2.25rem;
+        padding: 0.375rem 0.75rem;
+
+        &:hover {
+            color: @color-control-fore;
+        }
+
+        &[aria-pressed="true"] {
+            background: #364965;
+            color: #edf3ff;
+        }
+    }
+}

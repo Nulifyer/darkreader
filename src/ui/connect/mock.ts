@@ -7,11 +7,13 @@ export function getMockData(override = {} as Partial<ExtensionData>): ExtensionD
         isReady: true,
         isAllowedFileSchemeAccess: false,
         settings: {
+            imagePreservationOverrides: [],
             schemeVersion: 2,
             enabled: true,
             fetchNews: true,
             presets: [],
             theme: {
+                preserveImages: true,
                 mode: 1,
                 brightness: 110,
                 contrast: 90,

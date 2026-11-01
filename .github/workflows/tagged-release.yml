@@ -17,6 +17,7 @@ on:
 
 jobs:
   build:
+    if: github.repository == 'darkreader/darkreader'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

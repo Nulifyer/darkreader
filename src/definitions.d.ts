@@ -53,6 +53,8 @@ export type ViewProps = ExtWrapper & {
 };
 
 export interface Theme {
+    colorProfile: 'balanced' | 'classic';
+    preserveImages: boolean;
     mode: FilterMode;
     brightness: number;
     contrast: number;
@@ -95,6 +97,7 @@ export interface Automation {
 }
 
 export interface UserSettings {
+    imagePreservationOverrides: Array<{host: string; preserveImages: boolean}>;
     schemeVersion: number;
     enabled: boolean;
     fetchNews: boolean;

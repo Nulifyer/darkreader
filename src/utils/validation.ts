@@ -108,6 +108,13 @@ export function validateSettings(settings: Partial<UserSettings>): SettingValida
     validateProperty(settings, 'enabled', isBoolean, DEFAULT_SETTINGS);
     validateProperty(settings, 'fetchNews', isBoolean, DEFAULT_SETTINGS);
 
+    validateProperty(settings, 'imagePreservationOverrides', isArray, DEFAULT_SETTINGS);
+    validateArray(settings, 'imagePreservationOverrides', (override: UserSettings['imagePreservationOverrides'][number]) => {
+        return isPlainObject(override) &&
+            isNonEmptyString(override.host) &&
+            isBoolean(override.preserveImages);
+    });
+
     validateProperty(settings, 'theme', isPlainObject, DEFAULT_SETTINGS);
     const {errors: themeErrors} = validateTheme(settings.theme);
     errors.push(...themeErrors);
@@ -199,6 +206,8 @@ export function validateTheme(theme: Partial<Theme> | null | undefined): ThemeVa
     }
 
     const {validateProperty, errors} = createValidator();
+    validateProperty(theme, 'colorProfile', isOneOf('balanced', 'classic'), DEFAULT_THEME);
+    validateProperty(theme, 'preserveImages', isBoolean, DEFAULT_THEME);
     validateProperty(theme, 'mode', isOneOf(0, 1), DEFAULT_THEME);
     validateProperty(theme, 'brightness', isNumberBetween(0, 200), DEFAULT_THEME);
     validateProperty(theme, 'contrast', isNumberBetween(0, 200), DEFAULT_THEME);

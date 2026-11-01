@@ -43,6 +43,13 @@ declare namespace DarkReader {
      * Theme options.
      */
     interface Theme {
+        /** Color generation profile. Defaults to balanced in this personal fork. */
+        colorProfile: 'balanced' | 'classic';
+        /**
+         * Preserves original images instead of analyzing and adjusting them.
+         * Default true in this personal fork.
+         */
+        preserveImages: boolean;
         /**
          * 1 - dark mode, 0 - dimmed mode.
          * Default 1.

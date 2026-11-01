@@ -32,18 +32,22 @@ export default function Toggle(props: ToggleProps) {
 
     return (
         <span class={cls}>
-            <span
+            <button
+                type="button"
                 class={clsOn}
+                aria-pressed={checked}
                 onclick={onChange ? () => !checked && onChange(true) : undefined}
             >
                 {props.labelOn}
-            </span>
-            <span
+            </button>
+            <button
+                type="button"
                 class={clsOff}
+                aria-pressed={!checked}
                 onclick={onChange ? () => checked && onChange(false) : undefined}
             >
                 {props.labelOff}
-            </span>
+            </button>
         </span>
     );
 }

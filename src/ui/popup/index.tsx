@@ -14,20 +14,7 @@ import {initAltUI, shouldUseAltUI} from '@plus/popup/plus-body';
 declare const __PLUS__: boolean;
 
 function renderBody(data: ExtensionData, fonts: string[], installation: {date: number; version: string}, actions: ExtensionActions) {
-    if (data.settings.previewNewDesign) {
-        if (!document.documentElement.classList.contains('preview')) {
-            document.documentElement.classList.add('preview');
-        }
-    } else if (document.documentElement.classList.contains('preview')) {
-        document.documentElement.classList.remove('preview');
-    }
-
-    if (data.news && data.news.length > 0) {
-        const latest = data.news[0];
-        if (latest && !latest.displayed) {
-            actions.markNewsAsDisplayed([latest.id]);
-        }
-    }
+    document.documentElement.classList.remove('preview');
 
     sync(document.body, (
         <Body data={data} actions={actions} fonts={fonts} installation={installation} />

@@ -1,82 +1,175 @@
 import {m} from 'malevic';
 
-import type {ExtWrapper, Theme} from '../../../../definitions';
-import {getLocalMessage} from '../../../../utils/locales';
-import {isFirefox} from '../../../../utils/platform';
-import {isURLInList} from '../../../../utils/url';
-import {Button, Toggle} from '../../../controls';
-import {SettingsIcon} from '../../../icons';
+import type {ExtWrapper} from '../../../../definitions';
+import {ThemeEngine} from '../../../../generators/theme-engines';
+import {AutomationMode} from '../../../../utils/automation';
 import {openExtensionPage} from '../../../utils';
-import CustomSettingsToggle from '../custom-settings-toggle';
-import EngineSwitch from '../engine-switch';
-import FontSettings from '../font-settings';
+import {PopupSwitch} from '../controls';
+import SiteListSettings from '../site-list-settings';
+import {getSiteTheme, setScopedTheme} from '../theme-scope';
+import type {AppearanceScope} from '../theme-scope';
 
-async function openSettings() {
-    await openExtensionPage('options');
-}
-
-export default function MoreSettings({data, actions, fonts}: ExtWrapper & {fonts: string[]}) {
-    const tab = data.activeTab;
-    const custom = data.settings.customThemes.find(({url}) => isURLInList(tab.url, url));
-    const theme = custom ? custom.theme : data.settings.theme;
-
-    function setConfig(config: Partial<Theme>) {
-        if (custom) {
-            custom.theme = {...custom.theme, ...config};
-            actions.changeSettings({customThemes: data.settings.customThemes});
-        } else {
-            actions.setTheme(config);
-        }
-    }
-
+export default function MoreSettings(props: ExtWrapper & { scope: AppearanceScope }) {
+    const {data, actions, scope} = props;
+    const {settings} = data;
+    const theme = scope === 'site' ? getSiteTheme(data) : settings.theme;
+    const mode = settings.automation.enabled ? settings.automation.mode : AutomationMode.NONE;
     return (
         <section class="more-settings">
-            <div class="more-settings__section">
-                <FontSettings config={theme} fonts={fonts} onChange={setConfig} />
-            </div>
-            <div class="more-settings__section">
-                <EngineSwitch engine={theme.engine} onChange={(engine) => setConfig({engine})} />
-            </div>
-            <div class="more-settings__section">
-                <CustomSettingsToggle data={data} actions={actions} />
-                {tab.isProtected ? (
-                    <p class="more-settings__description more-settings__description--warning">
-                        {getLocalMessage('page_protected').replace(/\n/g, ' ')}
-                    </p>
-                ) : tab.isInDarkList ? (
-                    <p class="more-settings__description more-settings__description--warning">
-                        {getLocalMessage('page_in_dark_list').replace(/\n/g, ' ')}
-                    </p>
-                ) : (
-                    <p class="more-settings__description">
-                        {getLocalMessage('only_for_description')}
-                    </p>
-                )}
-            </div>
-            {isFirefox ? (
-                <div class="more-settings__section">
-                    <Toggle
-                        checked={data.settings.changeBrowserTheme}
-                        labelOn={getLocalMessage('custom_browser_theme_on')}
-                        labelOff={getLocalMessage('custom_browser_theme_off')}
-                        onChange={(checked) => actions.changeSettings({changeBrowserTheme: checked})}
-                    />
-                    <p class="more-settings__description">
-                        {getLocalMessage('change_browser_theme')}
-                    </p>
+            <div class="settings-row">
+                <div>
+                    <strong>Respect native dark themes</strong>
+                    <p>Use a website’s own dark theme when available.</p>
                 </div>
-            ) : null}
-            <div class="more-settings__section">
-                <Button onclick={openSettings} class="more-settings__settings-button">
-                    <span class="more-settings__settings-button__wrapper">
-                        <span class="more-settings__settings-button__icon">
-                            <SettingsIcon />
-                        </span>
-                        <span class="more-settings__settings-button__text">
-                            {getLocalMessage('all_settings')}
-                        </span>
-                    </span>
-                </Button>
+                <PopupSwitch
+                    label="Respect native dark themes"
+                    checked={settings.detectDarkTheme}
+                    onChange={(detectDarkTheme) => actions.changeSettings({detectDarkTheme})}
+                />
+            </div>
+            <div class="settings-row">
+                <div>
+                    <strong>Follow system appearance</strong>
+                    <p>Turn on when your system uses dark mode.</p>
+                </div>
+                <div class="automation-system">
+                    <PopupSwitch
+                        label="Follow system appearance"
+                        checked={mode === AutomationMode.SYSTEM}
+                        onChange={(checked) =>
+                            actions.changeSettings({
+                                automation: {
+                                    ...settings.automation,
+                                    enabled: checked,
+                                    mode: checked ? AutomationMode.SYSTEM : AutomationMode.NONE,
+                                },
+                            })
+                        }
+                    />
+                </div>
+            </div>
+            <details class="appearance-details">
+                <summary>Schedule</summary>
+                <div class="appearance-details__content">
+                    <label class="appearance-choice">
+                        <span>Turn on</span>
+                        <select
+                            class="automation-mode"
+                            aria-label="Automation"
+                            onrender={(node: HTMLSelectElement) => (node.value = mode)}
+                            onchange={(event: Event) => {
+                                const mode = (event.target as HTMLSelectElement).value as AutomationMode;
+                                actions.changeSettings({automation: {...settings.automation, mode, enabled: Boolean(mode)}});
+                            }}
+                        >
+                            <option value="">Manually</option>
+                            <option value={AutomationMode.SYSTEM}>With system</option>
+                            <option value={AutomationMode.TIME}>On a schedule</option>
+                            <option value={AutomationMode.LOCATION}>Sunset to sunrise</option>
+                        </select>
+                    </label>
+                    {mode === AutomationMode.TIME ? (
+                        <div class="schedule-times">
+                            <label>
+                                From
+                                <input
+                                    type="time"
+                                    aria-label="Start time"
+                                    onrender={(node: HTMLInputElement) => (node.value = settings.time.activation)}
+                                    onchange={(event: Event) =>
+                                        actions.changeSettings({
+                                            time: {...settings.time, activation: (event.target as HTMLInputElement).value},
+                                        })
+                                    }
+                                />
+                            </label>
+                            <label>
+                                Until
+                                <input
+                                    type="time"
+                                    aria-label="End time"
+                                    onrender={(node: HTMLInputElement) => (node.value = settings.time.deactivation)}
+                                    onchange={(event: Event) =>
+                                        actions.changeSettings({
+                                            time: {...settings.time, deactivation: (event.target as HTMLInputElement).value},
+                                        })
+                                    }
+                                />
+                            </label>
+                        </div>
+                    ) : null}
+                    {mode === AutomationMode.LOCATION ? (
+                        <div class="schedule-times">
+                            {(['latitude', 'longitude'] as const).map((key) => (
+                                <label>
+                                    {key === 'latitude' ? 'Latitude' : 'Longitude'}
+                                    <input
+                                        type="number"
+                                        aria-label={key}
+                                        min={key === 'latitude' ? -90 : -180}
+                                        max={key === 'latitude' ? 90 : 180}
+                                        step="any"
+                                        onrender={(node: HTMLInputElement) =>
+                                            (node.value = settings.location[key] == null ? '' : String(settings.location[key]))
+                                        }
+                                        onchange={(event: Event) => {
+                                            const node = event.target as HTMLInputElement;
+                                            if (node.validity.valid) {
+                                                actions.changeSettings({
+                                                    location: {
+                                                        ...settings.location,
+                                                        [key]: node.value === '' ? null : Number(node.value),
+                                                    },
+                                                });
+                                            }
+                                        }}
+                                    />
+                                </label>
+                            ))}
+                        </div>
+                    ) : null}
+                </div>
+            </details>
+            <details class="appearance-details">
+                <summary>Website rules</summary>
+                <div class="appearance-details__content">
+                    <SiteListSettings data={data} actions={actions} isFocused={false} />
+                </div>
+            </details>
+            <details class="appearance-details">
+                <summary>Rendering</summary>
+                <div class="appearance-details__content">
+                    <p class="popup-help">{scope === 'site' ? 'Applies to the current website.' : 'Applies to your defaults.'}</p>
+                    <label class="appearance-choice">
+                        <span>Preferred engine</span>
+                        <select
+                            aria-label="Rendering engine"
+                            onrender={(node: HTMLSelectElement) => (node.value = theme.engine)}
+                            onchange={(event: Event) =>
+                                setScopedTheme(props, scope, {engine: (event.target as HTMLSelectElement).value as ThemeEngine})
+                            }
+                        >
+                            <option value={ThemeEngine.dynamicTheme}>Dynamic</option>
+                            <option value={ThemeEngine.cssFilter}>Filter</option>
+                            <option value={ThemeEngine.svgFilter}>Filter+</option>
+                            <option value={ThemeEngine.staticTheme}>Static</option>
+                        </select>
+                    </label>
+                    <p class="popup-help">
+                        Preserving images uses Dynamic. Your preferred engine resumes when automatic image adjustment is allowed.
+                    </p>
+                    <button class="popup-text-button" onclick={() => openExtensionPage('stylesheet-editor')}>
+                        Edit custom CSS
+                    </button>
+                </div>
+            </details>
+            <div class="settings-links">
+                <button class="popup-link-row" onclick={() => openExtensionPage('options')}>
+                    All settings<span aria-hidden="true">↗</span>
+                </button>
+                <button class="popup-link-row" onclick={() => openExtensionPage('devtools')}>
+                    Developer tools<span aria-hidden="true">↗</span>
+                </button>
             </div>
         </section>
     );

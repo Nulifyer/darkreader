@@ -7,6 +7,7 @@ import {createSVGFilterStylesheet, getSVGFilterMatrixValue, getSVGReverseFilterM
 import {ThemeEngine} from '../generators/theme-engines';
 import {AutomationMode} from '../utils/automation';
 import {debounce} from '../utils/debounce';
+import {getImagePreservingTheme} from '../utils/image-preservation';
 import {isSystemDarkModeEnabled, runColorSchemeChangeDetector} from '../utils/media-query';
 import {MessageTypeBGtoCS} from '../utils/message';
 import {isFirefox} from '../utils/platform';
@@ -21,7 +22,6 @@ import DevTools from './devtools';
 import IconManager from './icon-manager';
 import type {ExtensionAdapter} from './messenger';
 import Messenger from './messenger';
-import Newsmaker from './newsmaker';
 import TabManager from './tab-manager';
 import UIHighlights from './ui-highlights';
 import UserStorage from './user-storage';
@@ -274,7 +274,8 @@ export class Extension {
             TabManager.updateContentScript({runOnProtectedPages: UserStorage.settings.enableForProtectedPages});
         }
 
-        UserStorage.settings.fetchNews && Newsmaker.subscribe();
+        // Remove a news alarm left by an older build of this personal copy.
+        chrome.alarms.clear('newsmaker');
         Extension.startBarrier!.resolve();
     }
 
@@ -289,8 +290,8 @@ export class Extension {
             changeSettings: Extension.changeSettings,
             setTheme: Extension.setTheme,
             toggleActiveTab: Extension.toggleActiveTab,
-            markNewsAsRead: Newsmaker.markAsRead,
-            markNewsAsDisplayed: Newsmaker.markAsDisplayed,
+            markNewsAsRead: () => Promise.resolve(),
+            markNewsAsDisplayed: () => Promise.resolve(),
             loadConfig: ConfigManager.load,
             applyDevFixes: DevTools.applyFixes,
             resetDevFixes: DevTools.resetFixes,
@@ -414,7 +415,7 @@ export class Extension {
             isAllowedFileSchemeAccess,
             uiHighlights,
         ] = await Promise.all([
-            Newsmaker.getLatest(),
+            Promise.resolve([]),
             Extension.getShortcuts(),
             Extension.getActiveTabInfo(),
             new Promise<boolean>((r) => chrome.extension.isAllowedFileSchemeAccess(r)),
@@ -557,9 +558,6 @@ export class Extension {
             } else {
                 resetWindowTheme();
             }
-        }
-        if (prev.fetchNews !== UserStorage.settings.fetchNews) {
-            UserStorage.settings.fetchNews ? Newsmaker.subscribe() : Newsmaker.unSubscribe();
         }
 
         if (prev.enableContextMenus !== UserStorage.settings.enableContextMenus) {
@@ -711,6 +709,7 @@ export class Extension {
             const custom = settings.customThemes.find(({url: urlList}) => isURLInList(tabURL, urlList));
             const preset = custom ? null : settings.presets.find(({urls}) => isURLInList(tabURL, urls));
             let theme = custom ? custom.theme : preset ? preset.theme : settings.theme;
+            theme = getImagePreservingTheme(theme, settings, tabURL);
             if (Extension.autoState === 'scheme-dark' || Extension.autoState === 'scheme-light') {
                 const mode = Extension.autoState === 'scheme-dark' ? 1 : 0;
                 theme = {...theme, mode};

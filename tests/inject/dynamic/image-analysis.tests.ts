@@ -9,6 +9,9 @@ import {multiline, timeout, waitForEvent} from '../support/test-utils';
 
 const theme = {
     ...DEFAULT_THEME,
+    // Keep upstream exact-color regression fixtures on the Original profile.
+    colorProfile: 'classic' as const,
+    preserveImages: false,
     darkSchemeBackgroundColor: 'black',
     darkSchemeTextColor: 'white',
 };

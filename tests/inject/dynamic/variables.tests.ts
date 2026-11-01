@@ -9,6 +9,8 @@ import {multiline, timeout, waitForEvent} from '../support/test-utils';
 
 const theme = {
     ...DEFAULT_THEME,
+    // Keep upstream exact-color regression fixtures on the Original profile.
+    colorProfile: 'classic' as const,
     darkSchemeBackgroundColor: 'black',
     darkSchemeTextColor: 'white',
 };
@@ -897,7 +899,7 @@ describe('CSS VARIABLES OVERRIDE', () => {
             '    Icons',
             '</h1>',
         );
-        createOrUpdateDynamicTheme(theme, null, false);
+        createOrUpdateDynamicTheme({...theme, preserveImages: false}, null, false);
         await waitForEvent('__darkreader__test__asyncQueueComplete');
         expect(getComputedStyle(container.querySelector('.icon1')!).backgroundImage).toMatch(/^url\("blob:.*"\)$/);
         expect(getComputedStyle(container.querySelector('.icon2')!).backgroundImage).toMatch(/^url\("blob:.*"\)$/);
@@ -925,7 +927,7 @@ describe('CSS VARIABLES OVERRIDE', () => {
             '</style>',
             '<h1><i class="icon"></i>Mixed background</h1>',
         );
-        createOrUpdateDynamicTheme(theme, null, false);
+        createOrUpdateDynamicTheme({...theme, preserveImages: false}, null, false);
         await waitForEvent('__darkreader__test__asyncQueueComplete');
         expect(getComputedStyle(container.querySelector('.icon')!).backgroundImage).toMatch(/^url\("blob:.*"\), linear-gradient\(rgb\(204, 0, 0\), rgb\(0, 0, 0\)\)$/);
     });
