@@ -1,26 +1,26 @@
 # Status
 
 ## Project state
-Personal Chromium MV3 release 1.0.2 is published at
-https://github.com/Nulifyer/darkreader/releases/tag/personal-v1.0.2.
+Personal Chromium MV3 release 1.0.3 is published at
+https://github.com/Nulifyer/darkreader/releases/tag/personal-v1.0.3.
 Origin is https://github.com/Nulifyer/darkreader, upstream tracks Dark Reader.
 Source is pushed to main and image-preservation. The release tag targets
-ae30136a6180506ba38b0371a3746e7bd8d08703.
+6f30852f2ec3c6ebe4e48de5468250f2544f9c4d.
 
 ## Current batch
-Owner: primary agent. Provide and publish a Linux helper for verified downloads
-and updates in the user's existing extension directory.
+Owner: primary agent. Completed and published the Linux helper, installed it on
+PATH, and updated the existing extension files using its public download.
 
 ## In progress
-The helper is installed at ~/.local/bin/darkreader-update. It updated the existing
-~/.local/chrome-extensions/nulifyer-darkreader root from 1.0.1 to 1.0.2 using the
-real GitHub download. Ten updater tests, package copying, JavaScript lint, and
-workflow validation passed. Prepare release 1.0.3 with a standalone helper asset.
-The extension runtime is unchanged.
+No updater work remains. The published helper is installed at
+~/.local/bin/darkreader-update. It updated the existing
+~/.local/chrome-extensions/nulifyer-darkreader root from 1.0.1 to 1.0.2 and then
+1.0.3 using real GitHub downloads. The folder path is unchanged, and browser
+profiles were not edited. The standalone helper asset matches committed source.
 
 ## Next action
-Publish 1.0.3 with the helper, verify its public asset, run the installed command
-again, and document the command and the remaining manual browser Reload step.
+Click Reload in the browser's extensions page, then refresh open websites.
+For future updates run darkreader-update and repeat the manual Reload step.
 
 ## Blockers
 None for this personal Chromium delivery. Private Docs and signed-in Office
@@ -29,11 +29,10 @@ contrast limitations documented in the earlier site audit.
 
 ## Verification
 Hosted release workflow passed:
-https://github.com/Nulifyer/darkreader/actions/runs/41356979088.
-It verified 117 unit tests, lint, source TypeScript, ZIP installation, Docs,
-popup, and native/restart behavior. Downloaded assets match all 91 local tagged
-build files, source commit, and checksum. Unauthenticated public ZIP download
-also passed. Evidence is in build/audit/slider/download/ and
-build/audit/slider/hosted.log. Earlier broad-site evidence remains in
-build/audit/sites-final/. Local profiles were removed. Packaging did not change
-the engine behavior or 440 px popup.
+https://github.com/Nulifyer/darkreader/actions/runs/41358380815.
+It verified 117 unit tests, 10 updater tests, lint, source TypeScript, ZIP
+installation, Docs, popup, and native/restart behavior. Downloaded assets match
+all 91 local tagged build files, source metadata, and checksum. Public helper
+download and live updates passed. Evidence is in build/audit/updater/.
+Earlier slider and site evidence remains in build/audit/slider/ and
+build/audit/sites-final/. Packaging did not change extension runtime behavior.

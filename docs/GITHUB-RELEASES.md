@@ -31,7 +31,7 @@ manifest so the existing development installation is unaffected.
 ## Versioning
 
 `personal-release.json` owns this fork's release name and version. The current
-release is `1.0.2`, under the descriptive name **Dark Reader Personal**. Each
+release is `1.0.3`, under the descriptive name **Dark Reader Personal**. Each
 release must increase the version. Keep each of its three numeric components
 between 0 and 65535. The tag must be exactly `personal-vVERSION`.
 
@@ -87,3 +87,10 @@ fixes duplicate percentages in the shared appearance slider. Its
 cover all four sliders in both scopes, repeated saves, resets, real mouse and
 keyboard input, and parent redraws during an unsaved preview. The public ZIP's
 checksum, source metadata, and all 91 files match the local tagged build.
+
+[Version 1.0.3](https://github.com/Nulifyer/darkreader/releases/tag/personal-v1.0.3)
+adds the standalone Linux helper and its ten tests to the release workflow.
+Its [hosted checks](https://github.com/Nulifyer/darkreader/actions/runs/41358380815)
+passed. The public helper asset matches source, and the command was verified
+against real GitHub releases in the existing installation directory. The
+extension runtime is unchanged from 1.0.2.
