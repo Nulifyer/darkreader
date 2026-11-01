@@ -1,4 +1,5 @@
 import {m} from 'malevic';
+import {getContext} from 'malevic/dom';
 
 import type {ExtWrapper} from '../../../../definitions';
 import {ChoiceGroup} from '../controls';
@@ -14,6 +15,18 @@ export function Adjustment(props: {
     defaultValue: number;
     onChange: (value: number) => void;
 }) {
+    const context = getContext();
+    // Render previews through Malevic so its percentage text node stays owned.
+    const store = context.store as {value?: number; sourceValue?: number};
+    if (store.sourceValue !== props.value) {
+        store.sourceValue = props.value;
+        store.value = props.value;
+    }
+    const value = store.value ?? props.value;
+    function preview(value: number) {
+        store.value = value;
+        context.refresh();
+    }
     return (
         <div class="appearance-adjustment">
             <div class="appearance-adjustment__label">
@@ -22,8 +35,11 @@ export function Adjustment(props: {
                     type="button"
                     title={`Reset ${props.label.toLowerCase()} to ${props.defaultValue}%`}
                     aria-label={`Reset ${props.label.toLowerCase()}`}
-                    onclick={() => props.onChange(props.defaultValue)}
-                >{`${props.value}%`}</button>
+                    onclick={() => {
+                        preview(props.defaultValue);
+                        props.onChange(props.defaultValue);
+                    }}
+                >{`${value}%`}</button>
             </div>
             <input
                 id={`adjustment-${props.label.toLowerCase()}`}
@@ -32,12 +48,13 @@ export function Adjustment(props: {
                 max={props.max}
                 step="1"
                 aria-label={props.label}
-                onrender={(node: HTMLInputElement) => (node.value = String(props.value))}
-                oninput={(event: Event) => {
-                    const node = event.target as HTMLInputElement;
-                    node.closest('.appearance-adjustment')!.querySelector('button')!.textContent = `${node.value}%`;
+                onrender={(node: HTMLInputElement) => (node.value = String(value))}
+                oninput={(event: Event) => preview(Number((event.target as HTMLInputElement).value))}
+                onchange={(event: Event) => {
+                    const value = Number((event.target as HTMLInputElement).value);
+                    preview(value);
+                    props.onChange(value);
                 }}
-                onchange={(event: Event) => props.onChange(Number((event.target as HTMLInputElement).value))}
             />
         </div>
     );

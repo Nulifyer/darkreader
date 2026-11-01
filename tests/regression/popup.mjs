@@ -38,10 +38,28 @@ try {
     await popup.bringToFront();
     const wait = (predicate) => popup.waitForFunction(predicate, {polling: 100, timeout: 10000});
     const view = async (id) => {await popup.click(`#tab-${id}`); await wait(() => document.querySelector('[role="tab"][aria-selected="true"]') != null);};
+    const assertAdjustment = async (label, value) => {
+        const actual = await popup.$eval(`input[aria-label="${label}"]`, (node) => {
+            const button = node.closest('.appearance-adjustment').querySelector('button');
+            return {value: Number(node.value), text: button.textContent, textNodes: button.childNodes.length};
+        });
+        assert.deepEqual(actual, {value, text: `${value}%`, textNodes: 1}, `${label} has one percentage matching the slider`);
+    };
+    const savedAdjustment = async (label, value) => {
+        await popup.waitForFunction(async ({label, value}) => {
+            const {settings} = (await chrome.runtime.sendMessage({type: 'ui-bg-get-data'})).data;
+            const defaults = document.querySelector('#tab-defaults').getAttribute('aria-selected') === 'true';
+            const theme = defaults ? settings.theme : settings.customThemes[0]?.theme ?? settings.theme;
+            return theme[label.toLowerCase()] === value;
+        }, {polling: 100, timeout: 10000}, {label, value});
+        await popup.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+        await assertAdjustment(label, value);
+    };
     const range = async (label, value) => {
         await popup.$eval(`input[aria-label="${label}"]`, (node, value) => {node.value = String(value); node.dispatchEvent(new Event('input', {bubbles: true}));}, value);
         assert.equal(await popup.$eval(`input[aria-label="${label}"]`, (node) => node.closest('.appearance-adjustment').querySelector('button').textContent), `${value}%`, 'range feedback updates while dragging');
         await popup.$eval(`input[aria-label="${label}"]`, (node) => node.dispatchEvent(new Event('change', {bubbles: true})));
+        await savedAdjustment(label, value);
     };
     const capture = async (name) => {
         await popup.bringToFront();
@@ -61,6 +79,51 @@ try {
     await wait(() => document.querySelector('.appearance-scope').textContent.includes('Using your defaults'));
 
     await capture('site');
+    for (const scope of ['site', 'defaults']) {
+        await view(scope);
+        await popup.evaluate(() => document.querySelector('.filter-settings details').open = true);
+        for (const [label, base] of [['Brightness', 100], ['Contrast', 100], ['Sepia', 0], ['Grayscale', 0]]) {
+            for (const value of [base + 5, base + 10, base + 5]) {
+                await range(label, value);
+            }
+            await popup.click(`button[aria-label="Reset ${label.toLowerCase()}"]`);
+            await savedAdjustment(label, base);
+        }
+        // Re-render the parent while an input preview has not been saved yet.
+        await popup.$eval('input[aria-label="Sepia"]', (node) => {node.value = '5'; node.dispatchEvent(new Event('input', {bubbles: true}));});
+        await change({enabled: false});
+        await wait(() => document.querySelector('.header__power').getAttribute('aria-pressed') === 'false');
+        await assertAdjustment('Sepia', 5);
+        await range('Sepia', 5);
+        await change({enabled: true});
+        await wait(() => document.querySelector('.header__power').getAttribute('aria-pressed') === 'true');
+        await popup.$eval('input[aria-label="Sepia"]', (node) => node.scrollIntoView({block: 'center'}));
+        await popup.focus('input[aria-label="Sepia"]');
+        await popup.keyboard.press('End');
+        await savedAdjustment('Sepia', 100);
+        await popup.keyboard.press('Home');
+        await savedAdjustment('Sepia', 0);
+        for (let value = 1; value <= 5; value++) {
+            await popup.keyboard.press('ArrowRight');
+            await savedAdjustment('Sepia', value);
+        }
+        const slider = await popup.$('input[aria-label="Sepia"]');
+        const box = await slider.boundingBox();
+        await popup.mouse.move(box.x + 8 + (box.width - 16) * 0.05, box.y + box.height / 2);
+        await popup.mouse.down();
+        await popup.mouse.move(box.x + box.width * 0.3, box.y + box.height / 2, {steps: 8});
+        const dragged = await popup.$eval('input[aria-label="Sepia"]', (node) => Number(node.value));
+        await assertAdjustment('Sepia', dragged);
+        await popup.mouse.up();
+        await savedAdjustment('Sepia', dragged);
+        await range('Sepia', 5);
+        await capture(`adjustments-${scope}`);
+        await popup.click('button[aria-label="Reset sepia"]');
+        await savedAdjustment('Sepia', 0);
+    }
+    await change({customThemes: []});
+    await view('site');
+    await wait(() => document.querySelector('.appearance-scope').textContent.includes('Using your defaults'));
     await range('Brightness', 85);
     await wait(async () => (await chrome.runtime.sendMessage({type: 'ui-bg-get-data'})).data.settings.customThemes[0]?.theme.brightness === 85);
     assert.equal((await collect()).settings.theme.brightness, 100, 'site edit cannot change global brightness');

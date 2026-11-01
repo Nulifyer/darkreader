@@ -8,20 +8,19 @@ Source is pushed to main and image-preservation. The release tag targets
 507ce51b919b62ad39f8e2bbb2bb98c3b61fddbf.
 
 ## Current batch
-Owner: primary agent. Completed source push, hosted release checks, publication,
-and unauthenticated ZIP download verification as explicitly requested.
+Owner: primary agent. Fix the reported duplicated slider percentage and deliver
+the correction through the established GitHub release process.
 
 ## In progress
-No release work remains. The GitHub workflow creates drafts; publication is
-manual. The published 1.0.1 ZIP records clean source and its matching tag.
-An unpublished personal-v1.0.0 tag remains from initial CI checks. Hosted browser
-tests use a CI-only sandbox override and explicitly await extension installation
-after restart. No tag history was rewritten.
+Reproduced 5%5% after saving sepia in the actual 1.0.1 popup. Direct textContent
+replacement detached Malevic's tracked text node. Adjustment now renders local
+preview state through Malevic. Real popup checks passed all four sliders in both
+scopes, repeated commits, resets, mouse/keyboard input, and a parent redraw during
+an unsaved preview. Prepare 1.0.2. No engine or palette changes are included.
 
 ## Next action
-Download the ZIP from the published release, extract to a permanent folder, and
-load it unpacked. Future updates use a new personal version and tag, the manual
-workflow, and the release review procedure in docs/GITHUB-RELEASES.md.
+Commit and push the slider fix, tag personal-v1.0.2, run the release workflow,
+verify downloaded assets, and publish the corrected ZIP.
 
 ## Blockers
 None for this personal Chromium delivery. Private Docs and signed-in Office
