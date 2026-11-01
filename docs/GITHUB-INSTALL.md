@@ -4,6 +4,37 @@ This is Nulifyer's personal fork of Dark Reader. Images keep their original
 colors by default. This package is for desktop Chromium browsers that support
 loading unpacked extensions. No build tools are needed.
 
+## Linux download helper
+
+The helper requires Python 3.9 or newer. Install it once:
+
+```sh
+mkdir -p "$HOME/.local/bin"
+curl -fL https://github.com/Nulifyer/darkreader/releases/latest/download/update-darkreader.py -o "$HOME/.local/bin/darkreader-update"
+chmod +x "$HOME/.local/bin/darkreader-update"
+"$HOME/.local/bin/darkreader-update"
+```
+
+Run `~/.local/bin/darkreader-update` whenever you want the latest release.
+It downloads the ZIP and checksum, verifies the package, and replaces the old
+files. Failed validation leaves the current installation intact. A failed
+directory swap restores the previous files. The helper uses a lock to prevent
+two simultaneous updates.
+
+If `~/.local/chrome-extensions/nulifyer-darkreader` already exists, the helper
+keeps that path. Otherwise it uses
+`${XDG_DATA_HOME:-$HOME/.local/share}/chrome-extensions/nulifyer-darkreader`.
+To use another existing installation:
+
+```sh
+~/.local/bin/darkreader-update --directory /path/to/installed-extension
+```
+
+Choose the folder containing `manifest.json`, rather than its `background`
+subfolder. After updating, click **Reload** on the extensions page and refresh
+your websites. The helper does not edit your browser profile or reload Chrome.
+For a first installation, use **Load unpacked** with the printed path.
+
 ## First installation
 
 1. Download `darkreader-personal-VERSION-chromium.zip` from
@@ -47,7 +78,7 @@ commit, and whether the package includes uncommitted local changes.
 
 ## Update limitations
 
-This ZIP does not update itself. Check GitHub Releases for newer versions.
+This ZIP does not update itself. Run the helper or check GitHub Releases for newer versions.
 It requires no Chrome Web Store account or approval. Signed CRX packages and
 Linux automatic updates are separate future work and are not included here.
 

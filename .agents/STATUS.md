@@ -8,20 +8,19 @@ Source is pushed to main and image-preservation. The release tag targets
 ae30136a6180506ba38b0371a3746e7bd8d08703.
 
 ## Current batch
-Owner: primary agent. Completed the slider percentage fix and published the
-verified correction through the established GitHub release process.
+Owner: primary agent. Provide and publish a Linux helper for verified downloads
+and updates in the user's existing extension directory.
 
 ## In progress
-Reproduced 5%5% after saving sepia in the actual 1.0.1 popup. Direct textContent
-replacement detached Malevic's tracked text node. Adjustment now renders local
-preview state through Malevic. Real popup checks passed all four sliders in both
-scopes, repeated commits, resets, mouse/keyboard input, and a parent redraw during
-an unsaved preview. Hosted release checks passed and 1.0.2 is published. No engine
-or palette changes are included. Evidence is under build/audit/slider/.
+The helper is installed at ~/.local/bin/darkreader-update. It updated the existing
+~/.local/chrome-extensions/nulifyer-darkreader root from 1.0.1 to 1.0.2 using the
+real GitHub download. Ten updater tests, package copying, JavaScript lint, and
+workflow validation passed. Prepare release 1.0.3 with a standalone helper asset.
+The extension runtime is unchanged.
 
 ## Next action
-Download 1.0.2, replace the contents of the installed folder without moving it,
-and reload the extension. Refresh open websites. No slider work remains.
+Publish 1.0.3 with the helper, verify its public asset, run the installed command
+again, and document the command and the remaining manual browser Reload step.
 
 ## Blockers
 None for this personal Chromium delivery. Private Docs and signed-in Office

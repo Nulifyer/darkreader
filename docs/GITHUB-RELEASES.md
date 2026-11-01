@@ -20,6 +20,7 @@ The package command always builds fresh source. Output is under
 - `INSTALL.md`, recipient instructions, also inside the ZIP.
 - `release.json`, source and version information, also inside the ZIP.
 - `extension/`, the unpacked package for inspection.
+- `update-darkreader.py`, the standalone Linux download/install helper.
 
 The ZIP includes the original MIT license. Local builds with uncommitted work
 are marked `dirty: true` and have no release tag in their metadata. They are
@@ -56,7 +57,7 @@ The inherited upstream release job is restricted to the upstream repository.
 4. In this fork's GitHub Actions, select **Prepare personal GitHub release**,
    choose **Run workflow**, and enter the exact tag.
 5. The workflow validates the tag against the configured version and clean
-   source, runs lint, TypeScript, and unit checks, then builds the package.
+   source, runs lint, TypeScript, unit, and updater checks, then builds the package.
    It installs the ZIP in an isolated browser and runs the release Docs, popup,
    and native-theme regressions. The package assets then enter a draft release.
 6. Download the draft ZIP, install it, and check its source/version metadata.

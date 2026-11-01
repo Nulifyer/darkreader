@@ -38,6 +38,8 @@ jobs:
       - run: npm run lint
       - run: npx tsc --noEmit -p src/tsconfig.json
       - run: npm run test:unit -- --runInBand
+      - name: Test the Linux download helper
+        run: python3 -B -m unittest discover -s tests/updater -p '*_test.py' -v
       - name: Build installation package
         env:
           RELEASE_TAG: ${{ inputs.tag }}
@@ -71,6 +73,7 @@ jobs:
             build/personal-release/SHA256SUMS
             build/personal-release/release.json
             build/personal-release/INSTALL.md
+            build/personal-release/update-darkreader.py
           if-no-files-found: error
           retention-days: 14
 
@@ -94,4 +97,4 @@ jobs:
           --verify-tag --draft
           --title "Dark Reader Personal $RELEASE_TAG"
           --notes-file package/INSTALL.md
-          package/*.zip package/SHA256SUMS package/release.json package/INSTALL.md
+          package/*.zip package/SHA256SUMS package/release.json package/INSTALL.md package/update-darkreader.py

@@ -23,6 +23,10 @@
 - The user accepted GitHub release ZIPs with manual updates. Keep a separate fork
   version in personal-release.json and prepare drafts only through an explicit
   workflow dispatch. Publication remains manual. Signed CRX updates are deferred.
+- The Linux helper uses Python's standard library, verifies release checksums and
+  package metadata, and keeps an existing ~/.local/chrome-extensions/nulifyer-darkreader
+  installation. New installations default under XDG_DATA_HOME/chrome-extensions.
+  Chrome loads the manifest root, not background/. Browser Reload stays manual.
 - The later user request authorizes a neutral popup with fewer borders and no
   promotions, replacing the initial instruction to retain the popup's style.
 - The popup opens on This site, with explicit Defaults and Settings views.

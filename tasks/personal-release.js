@@ -84,4 +84,5 @@ const checksum = createHash('sha256').update(await readFile(`${output}/${filenam
 await writeFile(`${output}/SHA256SUMS`, `${checksum}  ${filename}\n`);
 await writeFile(`${output}/release.json`, `${JSON.stringify(metadata, null, 4)}\n`);
 await cp('docs/GITHUB-INSTALL.md', `${output}/INSTALL.md`);
+await cp('scripts/update-darkreader.py', `${output}/update-darkreader.py`);
 console.log(`Created ${output}/${filename}${dirty ? ' (local preview with uncommitted changes)' : ''}`);

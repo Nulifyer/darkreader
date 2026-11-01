@@ -23,6 +23,8 @@ controls, and verification plan on 2026-11-01.
   navigation, and verified narrow/native/protected/paused states.
 - Prepare installation-ready GitHub ZIPs with manual updates and a draft-release
   workflow. Keep publication separate from local implementation.
+- Provide a one-command Linux updater that downloads and verifies the latest ZIP,
+  replaces the installed files, and keeps the browser's extension path stable.
 
 ## Scope
 Images, CSS image URLs, embedded SVG images, automatic image analysis, and

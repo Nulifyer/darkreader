@@ -6,6 +6,9 @@ Cover inheritance, site isolation, old settings, malformed imports, live changes
 and persistence. Build the delivered release. Keep exact run evidence in build/.
 
 ## Fast checks
+- `python3 -B -m unittest discover -s tests/updater -p '*_test.py' -v` covers
+  first/repeat install, existing-path selection, stale-file removal, checksum and
+  metadata failures, unrelated directories, ZIP paths/symlinks, and swap rollback.
 - `npm run package:personal` creates a fresh versioned ZIP. Then
   `CHROME_BIN=/path/to/chrome npm run test:personal:release` verifies checksum,
   archive contents, original license, runtime installation, theme generation,
