@@ -30,7 +30,7 @@ manifest so the existing development installation is unaffected.
 ## Versioning
 
 `personal-release.json` owns this fork's release name and version. The current
-candidate is `1.0.1`, under the descriptive name **Dark Reader Personal**. Each
+release is `1.0.1`, under the descriptive name **Dark Reader Personal**. Each
 release must increase the version. Keep each of its three numeric components
 between 0 and 65535. The tag must be exactly `personal-vVERSION`.
 
@@ -70,7 +70,12 @@ overwriting an existing release for the same tag. A failing build does not reach
 draft creation. Public-site auditing remains a deliberate pre-release check because live
 sites can require authentication or block automation.
 
-The release workflow has to run on GitHub before its hosted behavior is verified.
-Local checks establish package contents and browser installation, not hosted CI.
+The first published release is
+[personal-v1.0.1](https://github.com/Nulifyer/darkreader/releases/tag/personal-v1.0.1).
+Its [hosted workflow](https://github.com/Nulifyer/darkreader/actions/runs/41354938126)
+passed all release gates. The published ZIP was downloaded without authentication;
+its checksum, source metadata, and all 91 files matched the local tagged build.
+The CI-only browser wrapper accommodates the hosted runner sandbox. The restart
+test explicitly waits for extension reinstallation before checking saved settings.
 Linux signed CRX distribution and automatic updates are deferred until a full
 installation/update cycle is verified in the target browser.
